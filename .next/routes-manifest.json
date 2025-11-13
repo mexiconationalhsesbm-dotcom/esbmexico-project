@@ -1,0 +1,195 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "dynamicRoutes": [
+    {
+      "page": "/api/announcements/[id]",
+      "regex": "^/api/announcements/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/announcements/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/dashboard/shared/[[...folderPath]]",
+      "regex": "^/dashboard/shared(?:/(.+?))?(?:/)?$",
+      "routeKeys": {
+        "nxtPfolderPath": "nxtPfolderPath"
+      },
+      "namedRegex": "^/dashboard/shared(?:/(?<nxtPfolderPath>.+?))?(?:/)?$"
+    },
+    {
+      "page": "/dashboard/[dimension]/[[...folderPath]]",
+      "regex": "^/dashboard/([^/]+?)(?:/(.+?))?(?:/)?$",
+      "routeKeys": {
+        "nxtPdimension": "nxtPdimension",
+        "nxtPfolderPath": "nxtPfolderPath"
+      },
+      "namedRegex": "^/dashboard/(?<nxtPdimension>[^/]+?)(?:/(?<nxtPfolderPath>.+?))?(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/dashboard/accounts-list",
+      "regex": "^/dashboard/accounts\\-list(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/accounts\\-list(?:/)?$"
+    },
+    {
+      "page": "/dashboard/accounts-role",
+      "regex": "^/dashboard/accounts\\-role(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/accounts\\-role(?:/)?$"
+    },
+    {
+      "page": "/dashboard/add-dimension",
+      "regex": "^/dashboard/add\\-dimension(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/add\\-dimension(?:/)?$"
+    },
+    {
+      "page": "/dashboard/all-documents",
+      "regex": "^/dashboard/all\\-documents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/all\\-documents(?:/)?$"
+    },
+    {
+      "page": "/dashboard/archived",
+      "regex": "^/dashboard/archived(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/archived(?:/)?$"
+    },
+    {
+      "page": "/dashboard/archiving",
+      "regex": "^/dashboard/archiving(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/archiving(?:/)?$"
+    },
+    {
+      "page": "/dashboard/create-admin",
+      "regex": "^/dashboard/create\\-admin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/create\\-admin(?:/)?$"
+    },
+    {
+      "page": "/dashboard/manage-admin",
+      "regex": "^/dashboard/manage\\-admin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/manage\\-admin(?:/)?$"
+    },
+    {
+      "page": "/dashboard/manage-announcements",
+      "regex": "^/dashboard/manage\\-announcements(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/manage\\-announcements(?:/)?$"
+    },
+    {
+      "page": "/dashboard/manage-dimension",
+      "regex": "^/dashboard/manage\\-dimension(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/manage\\-dimension(?:/)?$"
+    },
+    {
+      "page": "/dashboard/manage-profile",
+      "regex": "^/dashboard/manage\\-profile(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/manage\\-profile(?:/)?$"
+    },
+    {
+      "page": "/dashboard/revisions",
+      "regex": "^/dashboard/revisions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/revisions(?:/)?$"
+    },
+    {
+      "page": "/dashboard/system-logs",
+      "regex": "^/dashboard/system\\-logs(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/system\\-logs(?:/)?$"
+    },
+    {
+      "page": "/dashboard/teachers",
+      "regex": "^/dashboard/teachers(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/teachers(?:/)?$"
+    },
+    {
+      "page": "/dashboard/trash",
+      "regex": "^/dashboard/trash(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/trash(?:/)?$"
+    },
+    {
+      "page": "/dashboard/upload-document",
+      "regex": "^/dashboard/upload\\-document(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/upload\\-document(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/setup-account",
+      "regex": "^/setup\\-account(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/setup\\-account(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "RSC",
+    "varyHeader": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+    "prefetchHeader": "Next-Router-Prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "Next-Router-Segment-Prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  },
+  "rewrites": []
+}
