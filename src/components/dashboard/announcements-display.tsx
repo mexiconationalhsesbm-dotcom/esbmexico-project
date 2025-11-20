@@ -11,7 +11,7 @@ import {
 import Pagination from "@/components/tables/Pagination"; // optional if you want pagination
 import { useModal } from "@/hooks/useModal";
 import Button from "../ui/button/Button";
-import { PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import AnnouncementModal from "../modals/AnnouncementModal";
 import Badge from "../ui/badge/Badge";
 import { useAlert } from "@/context/AlertContext";
@@ -74,6 +74,14 @@ export default function ManageAnnouncementsDisplay() {
     loadAnnouncements();
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
 
   return (
     <div>
@@ -90,11 +98,6 @@ export default function ManageAnnouncementsDisplay() {
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[900px]">
             
-            {loading ? (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                Loading...
-              </div>
-            ) : (
               <Table>
                 <TableHeader className="border-b border-gray-100 dark:border-white/5">
                   <TableRow>
@@ -171,7 +174,6 @@ export default function ManageAnnouncementsDisplay() {
                   )}
                 </TableBody>
               </Table>
-            )}
           </div>
         </div>
       </div>

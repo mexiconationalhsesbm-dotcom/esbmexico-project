@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAlert } from "@/context/AlertContext";
 import {
@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { createClient } from "@/utils/supabase/client"; 
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 type Admin = {
@@ -224,7 +224,7 @@ export default function OFPTable({ data }: { data: Admin[] }) {
       {!hasOFP && (
         <div className="flex justify-center mt-6">
           <button
-            onClick={() => router.push("/dashboard/all-admin")}
+            onClick={() => router.push("/dashboard/accounts-role")}
             className="bg-blue-600 px-6 py-2 rounded-xl text-white text-sm"
           >
             Assign

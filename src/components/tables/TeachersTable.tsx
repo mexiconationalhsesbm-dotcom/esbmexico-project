@@ -8,7 +8,7 @@
     TableHeader,
     TableRow,
   } from "../ui/table";
-  import { ArrowUpDown, Plus } from "lucide-react";
+  import { ArrowUpDown, Loader2, Plus } from "lucide-react";
   import Button from "../ui/button/Button";
   import { SortPanel, type SortOptions } from "../dashboard/sort-panel";
   import Pagination from "@/components/tables/Pagination";
@@ -53,18 +53,24 @@
     const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
       setCurrentPage(1);
     }, [searchQuery, sortOptions]);
 
     useEffect(() => {
-      const fetchUser = async () => {
-        const { data, error } = await supabase.auth.getUser();
-        if (!error && data?.user) setCurrentUser(data.user);
-      };
-      fetchUser();
-    }, [supabase]);
+    const fetchUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (!error && data?.user) setCurrentUser(data.user);
+
+      // ✅ Done loading initial data
+      setIsLoading(false);
+    };
+
+    fetchUser();
+  }, [supabase]);
+
 
     const logSystemActivity = async ({
       userId,
@@ -261,7 +267,13 @@
         }
       };
 
-
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
     return (
       <div>

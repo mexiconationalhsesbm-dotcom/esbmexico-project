@@ -1,3 +1,4 @@
+import ComponentCard from "@/components/common/ComponentCard";
 import { ArchivedPageClient } from "@/components/dashboard/ArchivedPageClient"
 import { createClient } from "@/utils/supabase/server"
 import { notFound } from "next/navigation"
@@ -29,8 +30,10 @@ export default async function ArchivedPage() {
   }
 
   return (
-    <div className="p-8">
-      <ArchivedPageClient admin={user.id} />
+    <div className="space-y-6 mt-8">
+      <ComponentCard title="Archive">
+        <ArchivedPageClient admin={user.id} />
+      </ComponentCard>
     </div>
   )
 }

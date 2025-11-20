@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Select from "../form/Select";
-import { Info } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import { useAlert } from "@/context/AlertContext";
 import { createClient } from "@/utils/supabase/client";
 import { createUserAdmin } from "@/libs/actions/createUser"; // ✅ server action
@@ -35,7 +35,7 @@ export function AccountForm({ teachers, dimensions, accounts }: AccountFormProps
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
   const [role, setRole] = useState<number>(4); // default: Dimension Member
   const [dimensionId, setDimensionId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
   const { showAlert } = useAlert();
@@ -47,6 +47,7 @@ export function AccountForm({ teachers, dimensions, accounts }: AccountFormProps
     const fetchUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (data.user) setCurrentUser(data.user);
+      setIsLoading(false);
     };
     fetchUser();
   }, [supabase]);
@@ -179,6 +180,14 @@ export function AccountForm({ teachers, dimensions, accounts }: AccountFormProps
     setIsLoading(false);
   }
 };
+
+if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full w-full mt-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
 
   return (

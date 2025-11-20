@@ -13,7 +13,7 @@ import { createClient } from "@/utils/supabase/client";
 import { deleteUserAdmin } from "@/libs/actions/deleteUser";
 import { SortPanel, type SortOptions } from "../dashboard/sort-panel";
 import Pagination from "@/components/tables/Pagination";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Loader2, Search } from "lucide-react";
 import Button from "../ui/button/Button";
 import EditAdminModal from "../modals/EditAccountModal";
 import Image from "next/image";
@@ -45,7 +45,7 @@ export default function AccountsRolesTable({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false)
-
+  const [isLoading, setIsLoading] = useState(true);
   // Search & Sort & Pagination States
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [adminSortOptions, setAdminSortOptions] = useState<SortOptions>({
@@ -68,10 +68,11 @@ export default function AccountsRolesTable({
     setCurrentPage(1);
   }, [fileSearchQuery, adminSortOptions]);
 
-  useEffect(() => {
+      useEffect(() => {
         const fetchUser = async () => {
           const { data, error } = await supabase.auth.getUser();
           if (!error && data?.user) setCurrentUser(data.user);
+          setIsLoading(false)
         };
         fetchUser();
       }, [supabase]);
@@ -241,6 +242,14 @@ export default function AccountsRolesTable({
       message: "The admin’s information has been updated.",
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div>

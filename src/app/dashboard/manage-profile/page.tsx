@@ -1,9 +1,6 @@
 import React from "react"
 import { createClient } from "@/utils/supabase/server"
 import { notFound } from "next/navigation"
-import UserMetaCard from "@/components/user-profile/UserMetaCard"
-import UserInfoCard from "@/components/user-profile/UserInfoCard"
-import UserAddressCard from "@/components/user-profile/UserAddressCard"
 import ManageProfile from "@/components/dashboard/ManageProfile"
 
 export const metadata = {
@@ -45,6 +42,7 @@ export default async function Profile() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/5">
       <ManageProfile user={user} profile={profileData} />
+      
     </div>
   )
 }

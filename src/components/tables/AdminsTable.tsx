@@ -11,7 +11,7 @@ import {
 } from "../ui/table";
 import { createClient } from "@/utils/supabase/client";
 import { deleteUserAdmin } from "@/libs/actions/deleteUser";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 type Admin = {
@@ -45,11 +45,13 @@ export default function AdminsTable({ data }: { data: Admin[] }) {
   const { showAlert } = useAlert();
   
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setCurrentUserId(user.id);
+      setIsLoading(false)
     };
     getUser();
   }, [supabase]);
@@ -131,6 +133,14 @@ export default function AdminsTable({ data }: { data: Admin[] }) {
       order: prev.field === field && prev.order === "asc" ? "desc" : "asc",
     }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div>

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import AccountsRolesTable from "@/components/tables/AccountsRoles";
 
 export const metadata = {
-  title: "eSBMexico All Accounts | MNHS",
+  title: "eSBMexico Accounts Roles | MNHS",
   description: "Mexico National High School e-SBM System",
 };
 
@@ -85,7 +85,7 @@ export default async function AccountsRoles() {
     <div>
       <PageBreadcrumb pageTitle="Personnel Management" />
       <div className="space-y-6 mt-8">
-        <ComponentCard title="All Accounts">
+        <ComponentCard title="Account Roles">
           <AccountsRolesTable data={adminList} dimensions={dimensions ?? []} />
         </ComponentCard>
       </div>

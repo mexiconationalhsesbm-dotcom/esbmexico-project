@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { createClient } from "@/utils/supabase/client";
-import { ArrowUpDown, Pencil, Trash2, Check, X, Plus } from "lucide-react";
+import { ArrowUpDown, Pencil, Trash2, Check, X, Plus, Loader2 } from "lucide-react";
 import Button from "../ui/button/Button"
 import AddDimensionModal from "../dashboard/AddDimensionModal";
 import ConfirmDeleteDimension from "../modals/ConfirmDeleteDimension";
@@ -44,11 +44,13 @@ export default function DimensionsTable({ data }: { data: Dimension[] }) {
 
   const { showAlert } = useAlert();
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
         const fetchUser = async () => {
           const { data, error } = await supabase.auth.getUser();
           if (!error && data?.user) setCurrentUser(data.user);
+          setIsLoading(false)
         };
         fetchUser();
       }, [supabase]);
@@ -180,9 +182,25 @@ export default function DimensionsTable({ data }: { data: Dimension[] }) {
     });
   };
 
+const createSlug = (name: string) => {
+  return (
+    name
+      .toLowerCase()                       
+      .replace(/[^a-z0-9\s]/g, "")         
+      .split(/\s+/)                      
+      .map((word, index) =>
+        index === 0
+          ? word                         
+          : word.charAt(0).toUpperCase() + word.slice(1)
+      )
+      .join("") + "Files"                 
+  );
+};
+
+
   // 🟢 Add new dimension
   const handleAddDimension = async (name: string) => {
-  const slug = `${name}Files`; // ✅ Generate slug automatically
+  const slug = createSlug(name);
 
   const { data, error } = await supabase
     .from("dimensions")
@@ -251,6 +269,14 @@ export default function DimensionsTable({ data }: { data: Dimension[] }) {
       order: prev.field === field && prev.order === "asc" ? "desc" : "asc",
     }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div>

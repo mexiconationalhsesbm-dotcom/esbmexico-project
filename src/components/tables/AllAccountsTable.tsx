@@ -13,7 +13,7 @@ import { createClient } from "@/utils/supabase/client";
 import { deleteUserAdmin } from "@/libs/actions/deleteUser";
 import { SortPanel, type SortOptions } from "./../dashboard/sort-panel";
 import Pagination from "@/components/tables/Pagination";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Loader2, Search } from "lucide-react";
 import Button from "../ui/button/Button";
 import ConfirmDeactivateModal from "../modals/ConfirmDeactivateModal";
 import TerminateSessionModal from "../modals/TerminateSessionModal";
@@ -74,7 +74,7 @@ export default function AllAccounts({
   // Terminate Session Modal States
   const [showTerminateModal, setShowTerminateModal] = useState(false);
   const [selectedTerminateId, setSelectedTerminateId] = useState<string | null>(null);
-
+  const [isLoading, setIsLoading] = useState(true);
 
   // Reset page when filters/sorts change
   useEffect(() => {
@@ -134,6 +134,7 @@ export default function AllAccounts({
     const fetchUser = async () => {
       const { data, error } = await supabase.auth.getUser();
       if (!error && data?.user) setCurrentUser(data.user);
+      setIsLoading(false);
     };
     fetchUser();
   }, [supabase]);
@@ -421,6 +422,14 @@ const handleConfirmDeactivate = async () => {
 
     return diffMinutes <= 2 ? "Online" : "Offline"; // 5-minute threshold
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div>

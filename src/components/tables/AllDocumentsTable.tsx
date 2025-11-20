@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Pagination from "./Pagination";
+import { Loader2 } from "lucide-react";
 // ✅ import your pagination component
 
 type Files = {
@@ -38,6 +39,12 @@ export default function AllDocumentsTable({
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(searchQuery || "");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+
 
   const getFileIcon = (fileType: string) => {
     if (fileType.includes("pdf")) return "/images/icons/pdf.svg";
@@ -61,6 +68,14 @@ export default function AllDocumentsTable({
     e.preventDefault();
     router.push(`?page=1&query=${encodeURIComponent(search)}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -95,11 +110,11 @@ export default function AllDocumentsTable({
       </div>
 
       {/* 📄 Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[1102px]">
             <Table>
-              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableHeader className="border-b border-gray-100 dark:border-white/5">
                 <TableRow>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                     Document
@@ -116,11 +131,19 @@ export default function AllDocumentsTable({
                 </TableRow>
               </TableHeader>
 
-              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
                 {files.length > 0 ? (
                   files.map((file) => (
-                    <TableRow key={file.id}>
-                      <TableCell className="px-5 py-4 sm:px-6 text-start">
+                    <TableRow key={file.id}
+                      className="hover:bg-gray-200 dark:hover:bg-gray-700"
+                      onClick={() => {
+                                if (file.dimension?.slug && file.folder?.id) {
+                                  router.push(`/dashboard/${file.dimension.slug}/${file.folder.id}`);
+                                }
+                              }}
+                    >
+                      <TableCell className="px-5 py-4 sm:px-6 text-start"
+                      >
                         <div className="flex items-center gap-3">
                           <Image
                             width={30}
@@ -133,12 +156,12 @@ export default function AllDocumentsTable({
                               {file.name}
                             </span>
                             <span
+                              className="block text-gray-500 text-theme-xs dark:text-gray-400 cursor-pointer hover:underline"
                               onClick={() => {
                                 if (file.dimension?.slug && file.folder?.id) {
                                   router.push(`/dashboard/${file.dimension.slug}/${file.folder.id}`);
                                 }
                               }}
-                              className="block text-gray-500 text-theme-xs dark:text-gray-400 cursor-pointer hover:underline"
                             >
                               {file.folder?.name || "-"}
                             </span>

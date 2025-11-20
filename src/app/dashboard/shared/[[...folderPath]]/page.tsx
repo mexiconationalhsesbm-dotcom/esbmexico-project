@@ -240,9 +240,9 @@ if (currentFolderId !== null && !isNaN(currentFolderId)) {
   }
 }
 
-console.log("🧩 Folder ID:", currentFolderId)
-console.log("🔐 Final access level:", currentFolderAccessLevel)
-console.log("🏷️ Shared to dimension ID:", currentFolderSharedFromDimensionId)
+// console.log("🧩 Folder ID:", currentFolderId)
+// console.log("🔐 Final access level:", currentFolderAccessLevel)
+// console.log("🏷️ Shared to dimension ID:", currentFolderSharedFromDimensionId)
   
   // Get folders and files to display
   let folders: (Folder & { shared_info: any })[] = []
