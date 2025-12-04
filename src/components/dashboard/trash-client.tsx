@@ -50,7 +50,7 @@ export function TrashClient({ dimensionId }: { dimensionId: number }) {
 
     useEffect(() => {
       fetchTrashItems();
-    }, [fetchTrashItems]); // ✅ no more ESLint warning
+    }, [fetchTrashItems]);
 
 
 
@@ -171,7 +171,6 @@ export function TrashClient({ dimensionId }: { dimensionId: number }) {
     )
   }
 
-  // 🧱 Table display
   return (
     <>
       <div className="p-6">

@@ -11,7 +11,7 @@ interface IdleDetectionOptions {
 }
 
 export function useIdleDetection({
-  idleTime = 60 * 60 * 1000, // 10 minutes
+  idleTime = 10 * 60 * 1000, // 10 minutes
   warningTime = 1 * 60 * 1000, // 1 minute
   onIdle,
   onActive,

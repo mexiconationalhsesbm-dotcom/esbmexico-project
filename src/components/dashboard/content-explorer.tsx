@@ -6,11 +6,13 @@ import type { File, Folder } from "@/types"
 import { FolderGrid } from "./folder-grid"
 import { CreateFolderButton } from "./create-folder-button"
 import { SortPanel, type SortOptions, type SortField } from "./sort-panel"
-import { ArrowUpDown, Search, X } from "lucide-react"
+import { ArrowUpDown, Search, Upload, X } from "lucide-react"
 // import { Input } from "../ui/input"
 import Button from "../ui/button/Button"
 import Input from "../form/input/InputField"
 import { useMoveCopy } from "@/context/move-copy-context"
+import UploadFolderModal from "./upload-folder-modal"
+
 
 interface ContentExplorerProps {
   folders: Folder[]
@@ -29,7 +31,7 @@ export function ContentExplorer({ folders, files, currentUserId, dimensionId, di
   const router = useRouter()
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [isFolderSortPanelOpen, setIsFolderSortPanelOpen] = useState(false)
-
+  const [isUploadFolderModalOpen, setIsUploadFolderModalOpen] = useState(false)
   const [folderSearchQuery, setFolderSearchQuery] = useState("")
 
   const [folderSortOptions, setFolderSortOptions] = useState<SortOptions>({
@@ -174,6 +176,10 @@ export function ContentExplorer({ folders, files, currentUserId, dimensionId, di
                     {isMoving ? "Moving..." : "Move here"}
                   </Button>
                 )}
+                <Button onClick={() => setIsUploadFolderModalOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Folder
+                </Button>
                 <CreateFolderButton dimensionId={dimensionId} parentFolderId={currentFolderId} createdBy={currentUserId}/>
               </div>
             )}
@@ -190,6 +196,16 @@ export function ContentExplorer({ folders, files, currentUserId, dimensionId, di
         title="Sort Folders"
         availableFields={folderSortFields}
       />
+      <UploadFolderModal
+          isOpen={isUploadFolderModalOpen}
+          onClose={() => setIsUploadFolderModalOpen(false)}
+          dimensionId={dimensionId}
+          currentFolderId={currentFolderId}
+          folderStatus={currentFolderStatus}
+          onSuccess={() => {
+            router.refresh()
+          }}
+        />
     </div>
   )
 }

@@ -45,7 +45,7 @@ export function IdleDetectionProvider({ children }: { children: React.ReactNode 
 
   // ✅ Only enable idle detection if logged in
   useIdleDetection({
-    idleTime: 60 * 60 * 1000,
+    idleTime: 10 * 60 * 1000,
     warningTime: 1 * 60 * 1000,
     onIdle: isLoggedIn ? handleIdle : undefined,
     onActive: isLoggedIn ? handleActive : undefined,

@@ -158,7 +158,7 @@ export function ArchivingPageClient({ dimension, admin }: ArchiverPageClientProp
         title: "Local Archiving",
         message: `The user has successfully archived the folder '${folder.name}' to cloud archive`
       });
-      // Refresh folder list
+      
       await fetchArchivingFolders()
     } catch (error) {
       console.error("Error archiving to cloud:", error)

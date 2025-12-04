@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import JSZip from "jszip"
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+// import { Storage } from "@google-cloud/storage"
 
 const supabaseAdmin = (() => {
   return createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -118,11 +119,44 @@ export async function POST(request: NextRequest) {
   }
 
 async function uploadToGCS(buffer: Buffer, path: string, fileName: string): Promise<string> {
-  // Placeholder - implement with Google Cloud Storage API
-  // This would use GCS SDK to upload the buffer
+  
   console.log(`Uploading to GCS: ${path}`)
   return `https://gcs-placeholder.com/${path}`
 }
+
+// async function uploadToGCS(buffer: Buffer, path: string): Promise<string> {
+//   // Initialize Google Cloud Storage client (no external JSON file required)
+//   const storage = new Storage({
+//     projectId: process.env.GCS_PROJECT_ID,
+//     credentials: {
+//       client_email: process.env.GCS_CLIENT_EMAIL!,
+//       private_key: process.env.GCS_PRIVATE_KEY!.replace(/\\n/g, "\n"), // fixes newline issue
+//     },
+//   })
+
+//   const bucketName = process.env.GCS_BUCKET_NAME!
+//   const bucket = storage.bucket(bucketName)
+//   const file = bucket.file(path)
+
+//   try {
+//     // Upload the ZIP buffer
+//     await file.save(buffer, {
+//       contentType: "application/zip",
+//       resumable: false,
+//       public: true, // If you want public files
+//     })
+
+//     const publicUrl = `https://storage.googleapis.com/${bucketName}/${path}`
+
+//     console.log(`✅ Uploaded to Google Cloud Storage: ${publicUrl}`)
+
+//     return publicUrl
+//   } catch (error) {
+//     console.error("❌ GCS upload failed:", error)
+//     throw new Error("Failed to upload to Google Cloud Storage")
+//   }
+// }
+
 
 async function buildFolderStructure(supabase: any, folderId: number, dimensionId: number): Promise<any> {
   const { data: folder } = await supabase.from("folders").select("id, name").eq("id", folderId).single()
