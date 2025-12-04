@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
       const folderPath = originalPath.split("/").slice(0, -1).join("/");
 
-      let targetFolderId =
+      const targetFolderId =
         folderMap[folderPath] ??
         (parentFolderId ? Number(parentFolderId) : null);
 
