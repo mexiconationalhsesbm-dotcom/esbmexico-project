@@ -145,31 +145,86 @@ export interface ArchivedFolder {
   archived: boolean
 }
 
+// export interface FolderTask {
+//   id: number
+//   folder_id: number
+//   dimension_id: number
+//   title: string
+//   description: string | null
+//   assigned_to_admins: string[];
+//   assigned_to_everyone: boolean
+//   status: "pending" | "completed" | "revision"
+//   created_by: string
+//   created_at: string
+//   updated_at: string
+// }
+
+// export interface TaskReview {
+//   id: number
+//   original_task_id: number
+//   folder_id: number
+//   dimension_id: number
+//   review_type: "initial" | "review"
+//   assigned_to: string
+//   submitted_by: string | null
+//   task_title: string
+//   task_description: string | null
+//   status: "pending" | "approved" | "revision"
+//   created_at: string
+//   updated_at: string
+// }
+
 export interface FolderTask {
   id: number
   folder_id: number
   dimension_id: number
   title: string
   description: string | null
-  assigned_to_admins: string[];
+  required_file_type: string | null
+  due_date: string | null
+  assigned_to_admins: number[]
   assigned_to_everyone: boolean
-  status: "pending" | "completed" | "revision"
+  status: "pending" | "submitted" | "completed" | "missing" | "for_revision"
   created_by: string
   created_at: string
   updated_at: string
+  // Joined data
+  folder_name?: string
+  dimension_name?: string
+  creator_name?: string
 }
 
-export interface TaskReview {
+export interface TaskAssignment {
   id: number
-  original_task_id: number
-  folder_id: number
-  dimension_id: number
-  review_type: "initial" | "review"
+  task_id: number
   assigned_to: string
-  submitted_by: string | null
-  task_title: string
-  task_description: string | null
-  status: "pending" | "approved" | "revision"
+  status: "pending" | "submitted" | "completed" | "missing" | "for_revision"
   created_at: string
   updated_at: string
+  // Joined data
+  assignee_name?: string
+  assignee_email?: string
+  task?: FolderTask
+  submissions?: TaskSubmission[]
+}
+
+export interface TaskSubmission {
+  id: number
+  task_id: number
+  assignment_id: number
+  submitted_by: string
+  version_number: number
+  file_name: string
+  file_path: string
+  file_type: string
+  file_size: number
+  public_url: string | null
+  leader_comment: string | null
+  leader_tag: "accepted" | "for_revision" | "rejected" | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+  // Joined data
+  submitter_name?: string
+  reviewer_name?: string
 }

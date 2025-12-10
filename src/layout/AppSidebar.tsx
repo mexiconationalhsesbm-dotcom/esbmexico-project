@@ -11,6 +11,7 @@ import {
   HorizontaLDots,
   ListIcon,
   PieChartIcon,
+  TaskIcon,
   TrashBinIcon,
   UserCircleIcon,
 } from "../icons/index";
@@ -94,6 +95,17 @@ const navItems: NavItem[] = useMemo(() => [
         },
       ]
     : []),
+    ...(isMasterAdmin || isDimensionLeader
+    ? [
+      {
+        icon: <TaskIcon />,
+        name: "Tasks",
+        path: "/dashboard/task",
+      },
+      ]
+    : []),
+
+    
 ], [isMasterAdmin, isDimensionLeader]);
 
 const settingsItems: NavItem[] = [

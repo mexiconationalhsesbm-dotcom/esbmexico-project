@@ -21,10 +21,10 @@ import Badge from "../ui/badge/Badge"
 import { ResetPinModal } from "../modals/ResetPinModal"
 import { UnlockFolderModal } from "../modals/UnlockFolderModal"
 import { LockFolderModal } from "../modals/LockFolderModal"
-import { TasksModal } from "../modals/TasksModal"
 import { TaskIcon } from "@/icons"
 import RenameModal from "./rename-modal"
 import { FolderInfoModal } from "../modals/FolderInfoModal"
+import { TasksModal } from "../modals/TaskModal"
 
 interface FolderGridProps {
   folders: Folder[]
@@ -266,14 +266,14 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
   return (
     <>
     {folders.length === 0 ? (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <Image
-          src="/images/no-folder.svg" // replace with your actual image path
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        {/* <Image
+          src="/images/no-folder.svg"
           alt="No folders"
           width={350}
           height={350}
           className="mb-6"
-        />
+        /> */}
         <p className="text-gray-500 dark:text-gray-400 mb-2">
           Current directory have no folders.
         </p>

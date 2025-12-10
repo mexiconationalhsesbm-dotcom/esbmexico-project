@@ -186,14 +186,14 @@ export function FileTable({ files, currentFolderId, dimensionId, isSharedView = 
 
   if (files.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Image
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+          {/* <Image
             src="/images/no-files.svg"
             alt="No folders"
             width={400}
             height={400}
             className="mb-6"
-          />
+          /> */}
           <p className="text-gray-500 dark:text-gray-400 mb-2">
             Current directory have no files.
           </p>

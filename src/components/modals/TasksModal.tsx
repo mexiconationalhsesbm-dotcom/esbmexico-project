@@ -75,7 +75,7 @@ export function TasksModal({ isOpen, onClose, folderId, dimensionId, folderName,
       return "Everyone";
     }
 
-    const assignedAdmins = admins.filter((a) => task.assigned_to_admins.includes(a.id));
+    const assignedAdmins = admins.filter((a) => task.assigned_to_admins.includes(Number(a.id)));
     return assignedAdmins.map((a) => a.full_name || a.email).join(", ") || "Unassigned";
   };
 
@@ -273,7 +273,7 @@ export function TasksModal({ isOpen, onClose, folderId, dimensionId, folderName,
                                     Mark as Completed
                                   </DropdownMenuItem>
                                 )}
-                                {task.status === "revision" && (
+                                {task.status === "for_revision" && (
                                   <DropdownMenuItem
                                     onClick={() => handleRevisionCheck(task)}
                                     disabled={isSubmittingRevision === task.id}

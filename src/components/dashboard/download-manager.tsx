@@ -20,22 +20,22 @@ import Image from "next/image"
 const renderFileIcon = (ext: string | undefined) => {
   switch (ext?.toLowerCase()) {
     case "pdf":
-      return <Image src="/images/icons/pdf.svg" alt="PDF Icon" className="w-8 h-8" />
+      return <Image src="/images/icons/pdf.svg" alt="PDF Icon" className="w-8 h-8" width={8} height={8}/>
     case "docx":
     case "doc":
-      return <Image src="/images/icons/doc-icon.svg" alt="DOCX Icon" className="w-8 h-8" />
+      return <Image src="/images/icons/doc-icon.svg" alt="DOCX Icon" className="w-8 h-8" width={8} height={8}/>
     case "pptx":
     case "ppt":
-      return <Image src="/images/icons/ppt-icon.svg" alt="PPTX Icon" className="w-8 h-8" />
+      return <Image src="/images/icons/ppt-icon.svg" alt="PPTX Icon" className="w-8 h-8" width={8} height={8}/>
     case "xlsx":
     case "xls":
-      return <Image src="/images/icons/excel-icon.svg" alt="XLSX Icon" className="w-8 h-8" />
+      return <Image src="/images/icons/excel-icon.svg" alt="XLSX Icon" className="w-8 h-8" width={8} height={8}/>
     case "txt":
-      return <Image src="/images/icons/txt-icon.svg" alt="TXT Icon" className="w-8 h-8" />
+      return <Image src="/images/icons/txt-icon.svg" alt="TXT Icon" className="w-8 h-8" width={8} height={8}/>
     case "zip":
-      return <Image src="/images/icons/zip-icon.svg" alt="ZIP Icon" className="w-8 h-8" />
+      return <Image src="/images/icons/zip-icon.svg" alt="ZIP Icon" className="w-8 h-8" width={8} height={8}/>
     default:
-      return <Image src="/images/icons/file.svg" alt="Default File Icon" className="w-8 h-8" />
+      return <Image src="/images/icons/file.svg" alt="Default File Icon" className="w-8 h-8" width={8} height={8}/>
   }
 }
 
