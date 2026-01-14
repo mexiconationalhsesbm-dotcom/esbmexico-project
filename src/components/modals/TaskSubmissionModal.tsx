@@ -35,6 +35,7 @@ interface Submission {
   reviewed_at: string | null
   created_at: string
   submitter_name?: string
+  submitter_email?: string
 }
 
 interface Assignment {
@@ -95,7 +96,7 @@ useEffect(() => {
 }, [isOpen, task?.id, fetchSubmissions])
 
   const handleReview = async () => {
-    if (!reviewingSubmission || !reviewTag) return
+    if (!reviewingSubmission || !reviewTag) return 
 
     setIsReviewing(true)
     try {
@@ -136,20 +137,49 @@ useEffect(() => {
   }
 
   const getTagBadge = (tag: string | null) => {
-    if (!tag) return <Badge variant="secondary">Not Reviewed</Badge>
-    const config: Record<string, { variant: "default" | "destructive" | "outline"; icon: any; label: string }> = {
-      accepted: { variant: "default", icon: CheckCircle, label: "Accepted" },
-      for_revision: { variant: "outline", icon: RefreshCw, label: "For Revision" },
-      rejected: { variant: "destructive", icon: XCircle, label: "Rejected" },
-    }
-    const { variant, icon: Icon, label } = config[tag] || { variant: "outline", icon: null, label: tag }
+  if (!tag) {
     return (
-      <Badge variant={variant} className="gap-1">
-        {Icon && <Icon className="h-3 w-3" />}
-        {label}
+      <Badge className="bg-gray-100 text-gray-700 border border-gray-300">
+        Not Reviewed
       </Badge>
     )
   }
+
+  const config: Record<
+    string,
+    { className: string; icon?: any; label: string }
+  > = {
+    accepted: {
+      className: "bg-green-100 text-green-700 border border-green-300",
+      icon: CheckCircle,
+      label: "Accepted",
+    },
+    for_revision: {
+      className: "bg-yellow-100 text-yellow-800 border border-yellow-300",
+      icon: RefreshCw,
+      label: "For Revision",
+    },
+    rejected: {
+      className: "bg-red-100 text-red-700 border border-red-300",
+      icon: XCircle,
+      label: "Rejected",
+    },
+  }
+
+  const { className, icon: Icon, label } =
+    config[tag] || {
+      className: "bg-gray-100 text-gray-700 border border-gray-300",
+      label: tag,
+    }
+
+  return (
+    <Badge className={`gap-1 ${className}`}>
+      {Icon && <Icon className="h-3 w-3" />}
+      {label}
+    </Badge>
+  )
+}
+
 
 
 
@@ -161,7 +191,7 @@ useEffect(() => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col bg-white">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -221,7 +251,7 @@ useEffect(() => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Submitted By</TableHead>
-                        <TableHead>Version</TableHead>
+                        <TableHead>Submission</TableHead>
                         <TableHead>File</TableHead>
                         <TableHead>Submitted At</TableHead>
                         <TableHead>Review Status</TableHead>
@@ -231,21 +261,26 @@ useEffect(() => {
                     <TableBody>
                       {submissions.map((submission) => (
                         <TableRow key={submission.id}>
-                          <TableCell className="font-medium">{submission.submitter_name || "Unknown"}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex flex-col">
+                              {submission.submitter_name || "Unknown"}
+                              <span className="text-xs text-gray-600">{submission.submitter_email || "Unknown"}</span>
+                            </div></TableCell>
                           <TableCell>
                             <Badge variant="outline">{getVersionLabel(submission.version_number)}</Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="truncate max-w-[150px]">{submission.file_name}</span>
-                              <Button
+                              {submission.leader_tag !== "accepted" && (
+                              <Button2
                                 size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                                onClick={() => window.open(submission.public_url || "", "_blank")}
+                                className="h-fit w-fit text-white"
+                                onClick={() => window.open(submission.public_url || "")}
                               >
-                                <Download className="h-3 w-3" />
-                              </Button>
+                                <Download className="h-4 w-4" />
+                              </Button2>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -268,29 +303,38 @@ useEffect(() => {
                                     setReviewingSubmission(submission)
                                     setReviewTag("accepted")
                                   }}
+                                  disabled={submission.leader_tag === "accepted"} // <-- disable if already accepted
+                                  className={submission.leader_tag === "accepted" ? "opacity-50 cursor-not-allowed" : ""}
                                 >
                                   <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                                   Mark as Accepted
                                 </DropdownMenuItem>
+
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setReviewingSubmission(submission)
                                     setReviewTag("for_revision")
                                   }}
+                                  disabled={submission.leader_tag === "accepted"} // <-- disable if already accepted
+                                  className={submission.leader_tag === "accepted" ? "opacity-50 cursor-not-allowed" : ""}
                                 >
                                   <RefreshCw className="h-4 w-4 mr-2 text-yellow-600" />
                                   Request Revision
                                 </DropdownMenuItem>
+
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setReviewingSubmission(submission)
                                     setReviewTag("rejected")
                                   }}
+                                  disabled={submission.leader_tag === "accepted"} // <-- disable if already accepted
+                                  className={submission.leader_tag === "accepted" ? "opacity-50 cursor-not-allowed" : ""}
                                 >
                                   <XCircle className="h-4 w-4 mr-2 text-red-600" />
                                   Reject
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
+
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>

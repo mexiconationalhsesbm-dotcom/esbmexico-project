@@ -11,18 +11,13 @@ export interface Admin {
   id: string
   email: string
   full_name: string | null
-  role: { 
-    id: number
-    name: "Unassigned" | "Master Admin" | "Overall Focal Person" | "Dimension Leader" | "Dimension Member"
-  } | null
+  role_id: number | null
   assigned_dimension_id: number | null
   status: "active" | "suspended" | "pending"
   last_active_at: string | null
   created_at: string
   updated_at: string
 }
-
-
 
   type AuthContextType = {
     user: User | null
@@ -81,7 +76,7 @@ export interface Admin {
               updated_at,
               status,
               last_active_at,
-              role:roles(id, name)
+              role_id
             `)
             .eq("id", sessionData.session.user.id)
             .single()
@@ -93,10 +88,8 @@ export interface Admin {
           // }
 
             if (adminData) {
-              setAdmin({
-                ...adminData,
-                role: adminData.role && adminData.role.length > 0 ? adminData.role[0] : null,
-              })
+              setAdmin(adminData as Admin)
+              console.log(admin)
             } else {
               setAdmin(null)
             }
@@ -145,7 +138,7 @@ export interface Admin {
       return () => {
         authListener.subscription.unsubscribe()
       }
-    }, [pathname, router])
+    }, [pathname, router, admin])
 
     const signIn = async (email: string, password: string) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -218,10 +211,10 @@ export interface Admin {
     const rolesReady = !isLoading && admin !== null;
 
     // Role-based permissions
-    const isMasterAdmin = admin?.role?.name === "Master Admin"
-    const isOverallFocalPerson = admin?.role?.name === "Overall Focal Person"
-    const isDimensionLeader = admin?.role?.name === "Dimension Leader"
-    const isDimensionMember = admin?.role?.name === "Dimension Member"
+    const isMasterAdmin = admin?.role_id === 2
+    const isOverallFocalPerson = admin?.role_id === 3
+    const isDimensionLeader = admin?.role_id === 4
+    const isDimensionMember = admin?.role_id === 5
 
 
     // Derived permissions

@@ -4,12 +4,11 @@ import { createClient as createServerClient } from "@/utils/supabase/server"
 import { createClient } from "@/utils/supabase/server";
 import { BreadcrumbNav } from "@/components/dashboard/breadcrumb"
 import { ContentExplorer } from "@/components/dashboard/content-explorer"
-import { SharedFilesSection } from "@/components/dashboard/shared-files-section"
 import type { Breadcrumb } from "@/types/index"
 import PageBreadcrumb from "@/components/common/PageBreadCrumb"
 import { ContentTable } from "@/components/dashboard/content-table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-
+import { cookies } from "next/headers"
+import { verifyUnlockToken } from "@/libs/folderLock";
 
 export const metadata: Metadata = {
   title: "eSBMexico SBM Documents | MNHS",
@@ -65,36 +64,6 @@ export default async function DimensionPage({ params }: DimensionPageProps) {
     }
   }
 
-  // If user doesn't have access to this dimension, only show shared files
-  // if (!hasAccessToThisDimension) {
-  //   return (
-  //     <div className="p-6 space-y-6">
-  //       <div className="flex items-center justify-between">
-  //         <div>
-  //           <h1 className="text-3xl font-bold mb-2">{dimensionData.name}</h1>
-  //           <p className="text-muted-foreground">You can only view files shared with your dimension</p>
-  //         </div>
-  //       </div>
-
-  //       {/* Show message that user doesn't have direct access */}
-  //       <Card>
-  //         <CardHeader>
-  //           <CardTitle>Access Restricted</CardTitle>
-  //           <CardDescription>
-  //             You don't have direct access to this dimension. Only shared files are visible below.
-  //           </CardDescription>
-  //         </CardHeader>
-  //         <CardContent>
-  //           <p className="text-sm text-muted-foreground">
-  //             To access files in this dimension directly, you need to be assigned as a leader or member of this
-  //             dimension.
-  //           </p>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   )
-  // }
-
   if (!hasAccessToThisDimension) {
     notFound();
   }
@@ -107,6 +76,43 @@ export default async function DimensionPage({ params }: DimensionPageProps) {
   if (folderPath.length > 0) {
     currentFolderId = Number.parseInt(folderPath[folderPath.length - 1], 10)
 
+    if (currentFolderId) {
+  const { data: folder } = await supabase
+    .from("folders")
+    .select("id, is_locked, task_locked")
+    .eq("id", currentFolderId)
+    .single()
+
+  if (!folder) {
+    notFound()
+  }
+
+  // If folder is locked, check unlock token
+  if (folder.is_locked) {
+    const cookieStore = await cookies()
+    const token = cookieStore.get(`folder-token-${folder.id}`)?.value
+
+    let isUnlocked = false
+
+    if (token && user) {
+      isUnlocked = await verifyUnlockToken(
+        folder.id,
+        token,
+        user.id
+      )
+    }
+
+    if (!isUnlocked) {
+      notFound() // or redirect("/dashboard?locked=folder")
+    }
+  }
+
+  if (folder.task_locked) {
+    notFound() // or redirect("/dashboard?locked=task")
+  }
+
+}
+
     // Get folder info for breadcrumbs
     const { data: folderData } = await supabase
       .from("folders")
@@ -114,10 +120,9 @@ export default async function DimensionPage({ params }: DimensionPageProps) {
       .eq("id", currentFolderId)
       .single()
 
-      currentFolderData = folderData;
+    currentFolderData = folderData;
 
     if (folderData) {
-      // Build breadcrumbs by traversing parent folders
       let folder = folderData
       const breadcrumbItems: Breadcrumb[] = [
         { id: folder.id, name: folder.name, path: `/dashboard/${dimension}/${folder.id}` },

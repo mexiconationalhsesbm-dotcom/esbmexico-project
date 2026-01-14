@@ -37,14 +37,43 @@ export async function GET(request: NextRequest) {
       query = query.eq("folder_tasks.folder_id", Number.parseInt(folderId))
     }
 
-    const { data: assignments, error } = await query.order("created_at", { ascending: false })
+    const { data, error } = await query.order("created_at", { ascending: false })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Normalize to empty array
+    const assignments = data ?? []
+
+    const now = new Date()
+
+    for (const assignment of assignments) {
+      const task = assignment.folder_tasks?.[0]
+
+      if (!task) continue
+
+      if (task.due_date && new Date(task.due_date) < now && task.status === "pending") {
+        // Update folder task
+        await supabase
+          .from("folder_tasks")
+          .update({ status: "missing" })
+          .eq("id", task.id)
+
+        task.status = "missing"
+
+        // Update assignment
+        await supabase
+          .from("task_assignments")
+          .update({ status: "missing" })
+          .eq("id", assignment.id)
+          .eq("status", "pending")
+      }
+    }
+
     // Get submissions for each assignment
     const assignmentIds = assignments?.map((a) => a.id) || []
+    
     const { data: submissions } = await supabase
       .from("task_submissions")
       .select("*")
@@ -58,6 +87,7 @@ export async function GET(request: NextRequest) {
         task: assignment.folder_tasks,
         submissions: submissions?.filter((s) => s.assignment_id === assignment.id) || [],
       })) || []
+
 
     return NextResponse.json({ assignments: assignmentsWithSubmissions })
   } catch (error: any) {

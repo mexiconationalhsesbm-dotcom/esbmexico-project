@@ -1,5 +1,6 @@
 "use client";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
+import { ActivityCenter } from "@/components/header/ActivityCenter";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import SystemAnnouncementsHeader from "@/components/header/SystemAnnouncementsDropdown";
 import UserDropdownClient from "@/components/header/UserDropdownClient";
@@ -130,9 +131,8 @@ export default function AppHeader({ user }: { user: any }) {
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
             <SystemAnnouncementsHeader/>
-            <UserTasksDropdown/>
+            <ActivityCenter user={user}/>
             <ThemeToggleButton />
-
           </div>
           <UserDropdownClient user={user} /> 
     

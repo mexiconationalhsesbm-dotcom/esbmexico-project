@@ -186,7 +186,7 @@ export function ContentExplorer({ folders, files, currentUserId, dimensionId, di
 
           </div>
         </div>
-        <FolderGrid folders={sortedFolders} dimensionSlug={dimensionSlug} dimensionId={dimensionId} isSharedView={isSharedView} currentAdminRole={currentAdminRole}/>
+        <FolderGrid folders={sortedFolders} currentUserId={currentUserId} dimensionSlug={dimensionSlug} dimensionId={dimensionId} isSharedView={isSharedView} currentAdminRole={currentAdminRole}/>
       </div>
       <SortPanel
         isOpen={isFolderSortPanelOpen}

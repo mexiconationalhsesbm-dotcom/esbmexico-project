@@ -15,15 +15,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is a leader or admin
-    const { data: adminData } = await supabase.from("admins").select("role").eq("id", user.id).single()
-
-    const isLeader = adminData?.role === "dimension_leader"
-    const isAdmin = adminData?.role === "master_admin" || adminData?.role === "overall_focal_person"
+    const { data: adminData } = await supabase.from("admins").select("role_id").eq("id", user.id).single()
+    const isLeader = adminData?.role_id === 4
+    const isAdmin = adminData?.role_id === 2 || adminData?.role_id === 3
 
     if (!isLeader && !isAdmin) {
       return NextResponse.json({ error: "Only leaders can update tasks" }, { status: 403 })
     }
 
+    // Update the task
     const { data: task, error: updateError } = await supabase
       .from("folder_tasks")
       .update({
@@ -39,6 +39,21 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+
+    // ✅ Update assignment statuses if due date changed
+    if (dueDate) {
+      const now = new Date()
+      const newDue = new Date(dueDate)
+
+      // Only update assignments that were marked "missing" because old due date passed
+      if (newDue > now) {
+        await supabase
+          .from("folder_tasks")
+          .update({ status: "pending", updated_at: new Date().toISOString() })
+          .eq("id", taskId)
+          .eq("status", "missing")
+      }
     }
 
     return NextResponse.json({ success: true, task })

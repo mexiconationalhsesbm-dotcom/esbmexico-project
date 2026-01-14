@@ -16,6 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    const { data: adminData } = await supabaseAdmin.from("admins").select("full_name, role_id").eq("id", userId).single()
+
+    const admin = adminData?.full_name
+
     // Get the task to check file type requirements
     const { data: task, error: taskError } = await supabaseAdmin
       .from("folder_tasks")
@@ -95,8 +99,9 @@ export async function POST(request: NextRequest) {
 
     // Upload file to storage
     const fileExt = file.name.split(".").pop()
-    const fileName = `task_${taskId}_${userId}_v${nextVersion}_${Date.now()}.${fileExt}`
-    const filePath = `${dimensionId}/${task.folder_id || "root"}/${fileName}`
+    const originalName = file.name.replace(/\.[^/.]+$/, "")
+    const fileName = `${admin}_${originalName}_v${nextVersion}.${fileExt}`
+    const filePath = `${dimensionId}/${task.folder_id || "root"}/task_files/${fileName}`
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from("files")

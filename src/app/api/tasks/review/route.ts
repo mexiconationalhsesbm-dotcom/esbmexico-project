@@ -1,5 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { createClient as createAdmin } from "@supabase/supabase-js"
+import { checkAndUnlockFolders } from "@/libs/task-lock-utils"
+
+const supabaseAdmin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+  auth: { persistSession: false },
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,18 +65,114 @@ export async function POST(request: NextRequest) {
 
       // Check if all assignments are completed to update task status
       if (tag === "accepted") {
+        const { data: taskData } = await supabase
+          .from("folder_tasks")
+          .select("folder_id, dimension_id, title")
+          .eq("id", submission.task_id)
+          .single()
+
+        if (taskData) {
+          const { data: otherSubmissions } = await supabase
+            .from("task_submissions")
+            .select("id, file_path")
+            .eq("assignment_id", submission.task_assignments.id)
+            .neq("id", submissionId)
+
+          if (otherSubmissions && otherSubmissions.length > 0) {
+            // Delete files from storage
+            for (const sub of otherSubmissions) {
+              await supabaseAdmin.storage.from("files").remove([sub.file_path])
+            }
+
+            // Delete submission records
+            await supabase
+              .from("task_submissions")
+              .delete()
+              .eq("assignment_id", submission.task_assignments.id)
+              .neq("id", submissionId)
+          }
+        
+          // Download the file from task-submissions bucket
+          const { data: fileData, error: downloadError } = await supabaseAdmin.storage
+            .from("files")
+            .download(submission.file_path)
+
+          if (downloadError) {
+            console.error("[v0] Error downloading submission file:", downloadError)
+          } else if (fileData) {
+            // Generate new file path in the files bucket
+            const fileExt = submission.file_name.split(".").pop()
+            const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`
+            const newFilePath = `${taskData.dimension_id}/${taskData.folder_id}/${fileName}`
+
+            // Upload to files bucket
+            const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+              .from("files")
+              .upload(newFilePath, fileData, {
+                upsert: true,
+                cacheControl: "3600",
+                contentType: submission.file_type,
+              })
+
+            if (uploadError) {
+              console.error("[v0] Error uploading file to folder:", uploadError)
+            } else {
+              // Get public URL
+              const { data: urlData } = supabaseAdmin.storage.from("files").getPublicUrl(newFilePath)
+              const publicUrl = urlData?.publicUrl || ""
+              const ext = submission.file_name.split(".").pop()
+              const base = submission.file_name
+                .replace(/\.[^/.]+$/, "")
+                .replace(/^[^_]+_/, "")
+                .replace(/_v\d+$/, "")
+
+              const newFileName = `${base}.${ext}`
+
+
+              // Insert into files table (like normal upload)
+              const { error: fileInsertError } = await supabaseAdmin.from("files").insert({
+                name: newFileName,
+                file_path: newFilePath,
+                file_type: submission.file_type.substring(0, 255),
+                file_size: submission.file_size,
+                dimension_id: taskData.dimension_id,
+                folder_id: taskData.folder_id,
+                uploaded_by: submission.submitted_by,
+                public_url: publicUrl,
+                status: "checked",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+
+              if (fileInsertError) {
+                console.error("[v0] Error inserting file record:", fileInsertError)
+              }
+
+              await supabaseAdmin.storage
+              .from("files")
+              .remove([submission.file_path])
+              }
+          }
+        }
+
+          await supabase
+            .from("folder_tasks")
+            .update({ status: "completed", updated_at: new Date().toISOString() })
+            .eq("id", submission.task_id)
+
         const { data: allAssignments } = await supabase
           .from("task_assignments")
           .select("status")
           .eq("task_id", submission.task_id)
 
         const allCompleted = allAssignments?.every((a) => a.status === "completed")
-        if (allCompleted) {
+        if (allCompleted && taskData?.folder_id) {
           await supabase
-            .from("folder_tasks")
-            .update({ status: "completed", updated_at: new Date().toISOString() })
-            .eq("id", submission.task_id)
+            .from("folders")
+            .update({ task_locked: false })
+            .eq("id", taskData.folder_id)
         }
+
       }
     }
 

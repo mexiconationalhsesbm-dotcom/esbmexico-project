@@ -123,14 +123,17 @@ export function ViewSubmissionsModal({ isOpen, onClose, task, assignmentId }: Vi
                   <div className="bg-muted rounded-lg p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium truncate flex-1 mr-2">{submission.file_name}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(submission.public_url || "", "_blank")}
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Download
-                      </Button>
+                      
+                      {submission.leader_tag !== "accepted" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(submission.public_url || "", "_blank")}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </Button>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Submitted: {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}

@@ -13,6 +13,7 @@ import type { FolderTask, Admin } from "@/types";
 import { CreateTaskModal } from "./CreateTaskModal";
 import ConfirmDeleteTask from "./ConfirmDeleteTask";
 import { useAlert } from "@/context/AlertContext";
+import { useAuth } from "@/context/auth-context";
 
 
 interface TasksModalProps {
@@ -21,11 +22,11 @@ interface TasksModalProps {
   folderId: number;
   dimensionId: number;
   folderName: string;
-  isDimensionMember: boolean;
 }
 
-export function TasksModal({ isOpen, onClose, folderId, dimensionId, folderName, isDimensionMember }: TasksModalProps) {
+export function TasksModal({ isOpen, onClose, folderId, dimensionId, folderName }: TasksModalProps) {
   const router = useRouter();
+  const { isDimensionLeader, isMasterAdmin, isOverallFocalPerson, isDimensionMember, user } = useAuth()
   const [tasks, setTasks] = useState<FolderTask[]>([]);
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [isLoading, setIsLoading] = useState(false);

@@ -7,7 +7,6 @@ import Button2 from "@/components/ui/button/Button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs/tabs"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Loader2,
   MoreVertical,
@@ -21,12 +20,17 @@ import {
   Eye,
   Trash2,
   Search,
+  UserPlus,
+  Pencil,
 } from "lucide-react"
 import { format } from "date-fns"
 import { EditTaskModal } from "@/components/modals/EditTaskModal"
 import { Badge } from "@/components/ui/tag/tag"
 import { TaskSubmissionsModal } from "@/components/modals/TaskSubmissionModal"
 import Image from "next/image"
+import { ManageAssigneesModal } from "../modals/ManageAssigneeModal"
+import { CustomTooltip } from "../ui/tooltip/custom-tooltip"
+import { DeleteTaskModal } from "./delete-task-modal"
 
 interface Assignee {
   id: string | number
@@ -61,15 +65,35 @@ interface TaskWithDetails {
   assignments: AssignmentDetail[]
 }
 
+interface EditableTask {
+  id: number
+  title: string
+  description: string | null
+  required_file_type: string | null
+  due_date: string | null
+  dimension_id: number
+  assigned_to_everyone: boolean
+  assignee_ids: number[]
+}
+
 
 export default function TaskBoard() {
   const router = useRouter()
   const [tasks, setTasks] = useState<TaskWithDetails[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("all")
-  const [editingTask, setEditingTask] = useState<TaskWithDetails | null>(null)
+  const [editingTask, setEditingTask] = useState<EditableTask | null>(null)
   const [isDeleting, setIsDeleting] = useState<number | null>(null)
   const [viewingSubmissions, setViewingSubmissions] = useState<TaskWithDetails | null>(null)
+  const [managingAssignees, setManagingAssignees] = useState<TaskWithDetails | null>(null)
+  const [deletingTask, setDeletingTask] = useState<TaskWithDetails | null>(null);
+
+  const [summary, setSummary] = useState({
+    totalTasks: 0,
+    pendingTasks: 0,
+    missingTasks: 0,
+    completedTasks: 0,
+  });
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true)
@@ -91,26 +115,42 @@ export default function TaskBoard() {
   fetchTasks()
 }, [fetchTasks])
 
-  const handleDeleteTask = async (taskId: number) => {
-    if (!confirm("Are you sure you want to delete this task? This will also delete all submissions.")) return
-
-    setIsDeleting(taskId)
-    try {
-      const response = await fetch("/api/tasks/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId }),
-      })
-
-      if (response.ok) {
-        fetchTasks()
-      }
-    } catch (error) {
-      console.error("Error deleting task:", error)
-    } finally {
-      setIsDeleting(null)
+const fetchSummary = useCallback(async () => {
+  try {
+    const res = await fetch("/api/tasks/summary");
+    if (res.ok) {
+      const data = await res.json();
+      setSummary(data);
     }
+  } catch (err) {
+    console.error("Error fetching task summary:", err);
   }
+}, []);
+
+useEffect(() => {
+  fetchSummary();
+}, [fetchSummary]);
+
+  const handleDeleteTask = async (taskId: number) => {
+      try {
+        const response = await fetch("/api/tasks/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taskId }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to delete task");
+        }
+
+        fetchTasks();
+        setDeletingTask(null);
+      } catch (error: any) {
+        console.error("Error deleting task:", error);
+        alert(error.message || "Something went wrong");
+      }
+    };
 
   const getFileIcon = (fileType: string) => {
   const type = fileType.toLowerCase()
@@ -129,12 +169,9 @@ export default function TaskBoard() {
     if (!dueDate) return false
     return new Date(dueDate) < new Date()
   }
-  
-  // Calculate summary stats
-  const totalTasks = tasks.length
-  const pendingTasks = tasks.filter((t) => t.status === "pending" || t.status === "missing").length
-  // const tasksWithSubmissions = tasks.filter((t) => t.submitted_count > 0).length
-  const completedTasks = tasks.filter((t) => t.status === "completed").length
+
+  const taskToManage = managingAssignees
+
 
   return (
     <div className="p-2 space-y-6">
@@ -146,7 +183,7 @@ export default function TaskBoard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalTasks}</div>
+            <div className="text-2xl font-bold">{summary.totalTasks}</div>
           </CardContent>
         </Card>
         <Card>
@@ -155,16 +192,16 @@ export default function TaskBoard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingTasks}</div>
+            <div className="text-2xl font-bold">{summary.pendingTasks}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Awaiting Review</CardTitle>
+            <CardTitle className="text-sm font-medium">Missing</CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{summary.missingTasks}</div>
           </CardContent>
         </Card>
         <Card>
@@ -173,7 +210,7 @@ export default function TaskBoard() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedTasks}</div>
+            <div className="text-2xl font-bold">{summary.completedTasks}</div>
           </CardContent>
         </Card>
       </div>
@@ -203,7 +240,7 @@ export default function TaskBoard() {
               ) : (
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
 
-                <div className="p-4 border-b border-gray-200 dark:border-white/10 flex justify-end">
+                {/* <div className="p-4 border-b border-gray-200 dark:border-white/10 flex justify-end">
                     <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <input
@@ -217,7 +254,7 @@ export default function TaskBoard() {
                         className="text-dark-gray dark:text-white w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white/80 dark:bg-white/5 py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     </div>
-                </div>
+                </div> */}
                     <div className="max-w-full overflow-x-auto">
                         <div className="min-w-[1000px]">
                         <Table>
@@ -230,7 +267,7 @@ export default function TaskBoard() {
                             <TableHead className="font-medium text-gray-700 dark:text-gray-300 text-theme-xs">Status</TableHead>
                             <TableHead className="font-medium text-gray-700 dark:text-gray-300 text-theme-xs">Assigned To</TableHead>
                             <TableHead className="font-medium text-gray-700 dark:text-gray-300 text-theme-xs">Submissions</TableHead>
-                            <TableHead className="font-medium text-gray-700 dark:text-gray-300 text-theme-xs">Actions</TableHead>
+                            <TableHead className="font-medium text-gray-700 dark:text-gray-300 text-theme-xs text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
@@ -321,11 +358,7 @@ export default function TaskBoard() {
                                     </TableCell>
 
                                 <TableCell className="max-w-[220px]">
-                                    {task.is_assigned_to_all ? (
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold shadow-sm ring-1 ring-indigo-200">
-                                        All Members
-                                        </span>
-                                    ) : task.assignments?.length > 0 ? (
+                                    {task.assignments?.length > 0 ? (
                                         <div className="flex flex-col gap-1.5">
                                         {task.assignments.map((a) => (
                                             <span
@@ -355,32 +388,60 @@ export default function TaskBoard() {
                                 </TableCell>
 
                                 <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setEditingTask(task)}>
-                                        <Edit className="h-4 w-4 mr-2" />
-                                        Edit Task
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onClick={() => handleDeleteTask(task.id)}
-                                        disabled={isDeleting === task.id}
-                                        className="text-destructive"
+                                <div className="flex items-center gap-1">
+                                  <CustomTooltip content="Manage Assignees">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                      onClick={() => setManagingAssignees(task)}
+                                      disabled={task.status === "completed"}
                                     >
-                                        {isDeleting === task.id ? (
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        )}
-                                        Delete Task
-                                    </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                </TableCell>
+                                      <UserPlus className="h-4 w-4" />
+                                    </Button>
+                                  </CustomTooltip>
+
+                                  <CustomTooltip content="Edit Task">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                      disabled={task.status === "completed"}
+                                      onClick={() =>
+                                        setEditingTask({
+                                          id: task.id,
+                                          title: task.title,
+                                          description: task.description,
+                                          required_file_type: task.required_file_type,
+                                          due_date: task.due_date,
+                                          dimension_id: task.dimension_id,
+                                          assigned_to_everyone: task.is_assigned_to_all,
+                                          assignee_ids: task.is_assigned_to_all
+                                            ? []
+                                            : task.assignments.map((a) => Number(a.assigned_to.id)),
+                                        })
+                                      }
+
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                  </CustomTooltip>
+
+                                  <CustomTooltip content="Delete Task">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                      onClick={() => setDeletingTask(task)}
+                                      disabled={task.status === "completed"}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </CustomTooltip>
+
+
+                                </div>
+                              </TableCell>
                             </TableRow>
                             ))}
                         </TableBody>
@@ -414,6 +475,34 @@ export default function TaskBoard() {
           onUpdate={fetchTasks}
         />
       )}
+
+      {deletingTask && (
+        <DeleteTaskModal
+          isOpen={!!deletingTask}
+          onClose={() => setDeletingTask(null)}
+          taskId={deletingTask.id}
+          taskName={deletingTask.title}
+          onSuccess={() => fetchTasks()}
+        />
+      )}
+
+
+      {taskToManage && (
+        <ManageAssigneesModal
+          isOpen
+          onClose={() => setManagingAssignees(null)}
+          taskId={taskToManage.id}
+          dimensionId={taskToManage.dimension_id}
+          taskTitle={taskToManage.title}
+          onSuccess={() => {
+            fetchTasks()
+            setManagingAssignees(null)
+            router.refresh()
+          }}
+        />
+      )}
+
+
     </div>
   )
 }

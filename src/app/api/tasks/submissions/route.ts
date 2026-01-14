@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       submissions?.map((s) => ({
         ...s,
         submitter_name: s.admins?.full_name || s.admins?.email,
+        submitter_email: s.admins?.email,
       })) || []
 
     return NextResponse.json({ submissions: submissionsWithNames })

@@ -23,9 +23,10 @@ interface TasksModalProps {
   dimensionId: number
   folderName: string
   isDimensionMember: boolean
+  currentUser: string
 }
 
-export function TasksModal({ isOpen, onClose, folderId, dimensionId, folderName, isDimensionMember }: TasksModalProps) {
+export function TasksModal({ isOpen, onClose, folderId, dimensionId, folderName, isDimensionMember, currentUser }: TasksModalProps) {
   const router = useRouter()
   const [tasks, setTasks] = useState<(FolderTask & { assignments?: TaskAssignment[] })[]>([])
   const [myAssignments, setMyAssignments] = useState<TaskAssignment[]>([])
@@ -170,7 +171,6 @@ useEffect(() => {
                     <TableHead>File Type</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -247,29 +247,6 @@ useEffect(() => {
                                         {task.status.toUpperCase()}
                                     </span>
                                     </TableCell>
-                      <TableCell className="text-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button2 variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button2>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteTask(task.id)}
-                              disabled={isDeleting === task.id}
-                              className="text-destructive"
-                            >
-                              {isDeleting === task.id ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4 mr-2" />
-                              )}
-                              Delete Task
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -323,14 +300,16 @@ useEffect(() => {
                                         <div
                                         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all
                                             ${
-                                            task.status === "missing"
-                                                ? "bg-red-50 text-red-600 ring-1 ring-red-200"
-                                                : task.status === "completed"
-                                                ? "bg-green-50 text-green-600 ring-1 ring-green-200"
-                                                : task.status === "pending" || task.status === "for_revision"
-                                                ? "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200"
-                                                : "bg-gray-50 text-gray-600 ring-1 ring-gray-200"
-                                            }
+                                            task.status === "for_revision"
+                                            ? "bg-violet-100 text-violet-700 ring-1 ring-violet-200"
+                                            : task.status === "completed"
+                                            ? "bg-green-100 text-green-700 ring-1 ring-green-200"
+                                            : task.status === "missing"
+                                            ? "bg-red-100 text-red-700 ring-1 ring-red-200"
+                                            : task.status === "submitted"
+                                            ? "bg-blue-100 text-blue-700 ring-1 ring-blue-200"
+                                            : "bg-yellow-100 text-yellow-700 ring-1 ring-yellow-200"
+                                        }
                                         `}
                                         >
                                         <Calendar className="h-4 w-4 opacity-80" />
@@ -413,6 +392,7 @@ useEffect(() => {
           isOpen={!!submitModalTask}
           onClose={() => setSubmitModalTask(null)}
           task={submitModalTask}
+          currentUserId={currentUser}
           onSuccess={() => {
             fetchMyAssignments()
             setSubmitModalTask(null)

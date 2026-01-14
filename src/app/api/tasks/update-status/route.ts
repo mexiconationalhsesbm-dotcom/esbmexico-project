@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { checkAndUnlockFolders } from "@/libs/task-lock-utils"
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -60,6 +61,8 @@ export async function POST(request: NextRequest) {
       if (updateError) {
         return NextResponse.json({ error: updateError.message }, { status: 500 })
       }
+
+      await checkAndUnlockFolders()
     }
 
     return NextResponse.json({

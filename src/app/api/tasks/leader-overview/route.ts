@@ -5,6 +5,9 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const status = request.nextUrl.searchParams.get("status")
+    const page = parseInt(request.nextUrl.searchParams.get("page") || "1")
+    const pageSize = parseInt(request.nextUrl.searchParams.get("pageSize") || "10")
+    const offset = (page - 1) * pageSize
 
     const {
       data: { user },
@@ -84,6 +87,7 @@ export async function GET(request: NextRequest) {
     const { data: dimensionAdmins } = await supabase
       .from("admins")
       .select("id, assigned_dimension_id")
+      .eq("role_id", 5)
       .in("assigned_dimension_id", dimensionIds.length ? dimensionIds : [-1])
 
     // Build final task object
@@ -127,12 +131,18 @@ export async function GET(request: NextRequest) {
         }
       }) || []
 
-    // Mark overdue tasks as missing
-    const now = new Date()
+const now = new Date()
     for (const task of tasksWithDetails) {
       if (task.due_date && new Date(task.due_date) < now && task.status === "pending") {
         await supabase.from("folder_tasks").update({ status: "missing" }).eq("id", task.id)
         task.status = "missing"
+
+        // Update assignments to missing
+        await supabase
+          .from("task_assignments")
+          .update({ status: "missing" })
+          .eq("task_id", task.id)
+          .eq("status", "pending")
       }
     }
 

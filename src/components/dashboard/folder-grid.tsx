@@ -25,6 +25,7 @@ import { TaskIcon } from "@/icons"
 import RenameModal from "./rename-modal"
 import { FolderInfoModal } from "../modals/FolderInfoModal"
 import { TasksModal } from "../modals/TaskModal"
+import { TaskLockedModal } from "../modals/TaskLockedWarningModal"
 
 interface FolderGridProps {
   folders: Folder[]
@@ -32,9 +33,10 @@ interface FolderGridProps {
   dimensionId: number
   isSharedView?: boolean
   currentAdminRole: number
+  currentUserId: string
 }
 
-export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView = false, currentAdminRole }: FolderGridProps) {
+export function FolderGrid({ folders, dimensionSlug, dimensionId, currentUserId, isSharedView = false, currentAdminRole }: FolderGridProps) {
   const router = useRouter()
   const { isMasterAdmin, isDimensionLeader, isDimensionMember, assignedDimensionId } = useAuth()
   const [folderToRename, setFolderToRename] = useState<Folder | null>(null)
@@ -61,6 +63,10 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
 
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [folderToViewInfo, setFolderToViewInfo] = useState<Folder | null>(null)
+
+  const [taskLockedFolder, setTaskLockedFolder] = useState<Folder | null>(null)
+  const [lockedFolders, setLockedFolders] = useState<Set<number>>(new Set())
+  const [isLoadingLocks, setIsLoadingLocks] = useState(false)
 
      useEffect(() => {
     const verifyStoredTokens = async () => {
@@ -247,6 +253,13 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
     setFolderToUnlock(folder)
   }
 
+  const handleFolderClick = (folder: Folder, isTaskLocked: boolean) => {
+    if (isTaskLocked) {
+      setTaskLockedFolder(folder)
+      return
+    }
+  }
+
   const handleResetPinClick = (folder: Folder) => {
     setFolderToResetPin(folder)
   }
@@ -261,7 +274,7 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
   const canRequestRevision = (folder: Folder): boolean => {
     return currentAdminRole === 5 && folder.status === "checked"
   }
-  
+
 
   return (
     <>
@@ -283,21 +296,38 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
       </div>
     ) : (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {folders.map((folder) => (
-          <Card key={folder.id} className="group relative border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3 rounded-xl 
+        {folders.map((folder) => {
+        const isTaskLocked = (folder as any).task_locked || false
+        return (
+          <Card key={folder.id} className="relative overflow-visible border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3 rounded-xl 
              transition-all duration-200 ease-out
              hover:shadow-lg hover:border-primary/60 hover:-translate-y-1">
               {incompleteTaskCounts[folder.id] > 0 && (
-                        <span
-                          className={`absolute right-0 top-0.5 z-10 h-3 w-3 rounded-full bg-orange-400 flex`}
-                        >
-                          <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
-                        </span>
-            )}
+                <span className="absolute left-4 top-2 z-10 min-w-[1.25rem] h-5 px-3
+                                rounded-full bg-orange-400 text-white text-xs
+                                flex items-center justify-center font-semibold">
+                  
+                  <span className="absolute inline-flex w-full h-full rounded-full 
+                                  bg-orange-400 opacity-75 animate-ping"></span>
+
+                  <span className="relative tracking-wider">
+                    {incompleteTaskCounts[folder.id] > 9 ? "9+ tasks" : `${incompleteTaskCounts[folder.id]} task${incompleteTaskCounts[folder.id] > 1 ? "s" : ""}`}
+                  </span>
+                </span>
+              )}
+
             <CardContent className="p-0 relative">
 
               {folder.is_locked && (
-                <div className="absolute top-2 left-16 z-5">
+                <div className="absolute top-13 left-16 z-5">
+                  <div className="bg-red-100 border border-red-300 rounded-full p-1.5 flex items-center justify-center">
+                    <Lock className="h-3 w-3 text-red-600" />
+                  </div>
+                </div>
+              )}
+
+              {isTaskLocked && (
+                <div className="absolute top-13 left-16 z-5">
                   <div className="bg-red-100 border border-red-300 rounded-full p-1.5 flex items-center justify-center">
                     <Lock className="h-3 w-3 text-red-600" />
                   </div>
@@ -311,8 +341,7 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
                   >
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <button
-        className="text-black dark:text-white flex h-7 w-7 items-center justify-center rounded-md opacity-0 
-                   group-hover:opacity-100 transition-opacity hover:bg-gray-200 
+        className="text-black dark:text-white flex h-7 w-7 items-center justify-center rounded-md hover:bg-gray-200 
                    dark:hover:bg-gray-400"
       >
                         <MoreVertical className="h-4 w-4" />
@@ -331,12 +360,19 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
                       >
                         <TaskIcon className="h-4 w-4 mr-2"/>
                         {incompleteTaskCounts[folder.id] > 0 && (
-                          <span
-                          className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 flex`}
-                        >
-                          <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
-                        </span>
+                          <span className="absolute right-0 top-0 z-10 min-w-[1.25rem] h-5 px-1
+                                          rounded-full bg-orange-400 text-white text-xs
+                                          flex items-center justify-center font-semibold">
+                            
+                            <span className="absolute inline-flex w-full h-full rounded-full 
+                                            bg-orange-400 opacity-75 animate-ping"></span>
+
+                            <span className="relative">
+                              {incompleteTaskCounts[folder.id]}
+                            </span>
+                          </span>
                         )}
+
                         <span>Tasks</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -521,7 +557,7 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
 
               <Link
                 href={
-                  folder.is_locked && !unlockedFolders.has(folder.id)
+                  (folder.is_locked && !unlockedFolders.has(folder.id)) || (isTaskLocked)
                     ? "#"
                     : `/dashboard/${dimensionSlug}/${folder.id}`
                 }
@@ -530,8 +566,13 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
                     e.preventDefault()
                     e.stopPropagation()
                     handleUnlockClick(folder)
+                  }else if(isTaskLocked){
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleFolderClick(folder, isTaskLocked)
                   }
                 }}
+                
                 className="block py-6 px-6 h-full rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
               >
                         <div className="flex flex-row gap-4">
@@ -579,7 +620,7 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
               </Link>
             </CardContent>
           </Card>
-        ))}
+        )})}
       </div>
       )}
 
@@ -703,6 +744,7 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
       {folderWithTasksModal && (
         <TasksModal
           isOpen={!!folderWithTasksModal}
+          currentUser={currentUserId}
           onClose={() => setFolderWithTasksModal(null)}
           folderId={folderWithTasksModal.id}
           dimensionId={dimensionId || 0}
@@ -716,6 +758,14 @@ export function FolderGrid({ folders, dimensionSlug, dimensionId, isSharedView =
           isOpen={!!folderToViewInfo}
           onClose={() => setFolderToViewInfo(null)}
           folder={folderToViewInfo}
+        />
+      )}
+
+      {taskLockedFolder && (
+        <TaskLockedModal
+          isOpen={!!taskLockedFolder}
+          onClose={() => setTaskLockedFolder(null)}
+          folderName={taskLockedFolder.name}
         />
       )}
 

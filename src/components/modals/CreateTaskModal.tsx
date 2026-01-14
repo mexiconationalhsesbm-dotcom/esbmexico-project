@@ -14,7 +14,7 @@ import {
 import Input from "@/components/form/input/TextInput"
 import { Label } from "@/components/ui/label"
 import type { Admin } from "@/types"
-import { Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import TextArea from "../form/input/TextArea"
 import Checkbox from "../form/input/Checkbox"
 import { DatePicker } from "../ui/calendar/date-picker"
@@ -37,6 +37,9 @@ export function CreateTaskModal({ isOpen, onClose, folderId, dimensionId, onSucc
   const [admins, setAdmins] = useState<Admin[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showLockConfirm, setShowLockConfirm] = useState(false)
+  const [isLockingFolder, setIsLockingFolder] = useState(false)
+  const [folderTaskLocked, setFolderTaskLocked] = useState(false)
 
   const FILE_TYPES = [
   { label: "Any", value: "" },
@@ -106,7 +109,45 @@ export function CreateTaskModal({ isOpen, onClose, folderId, dimensionId, onSucc
         throw new Error(data.error || "Failed to create task")
       }
 
-      // Reset form
+      const folderResponse = await fetch(`/api/folders/check-task-lock?folderId=${folderId}`)
+      const folderData = await folderResponse.json()
+
+      if (!folderData.taskLocked) {
+        setShowLockConfirm(true)
+      } else {
+        setTitle("")
+        setDescription("")
+        setRequiredFileType("")
+        setDueDate(undefined)
+        setAssignedToEveryone(false)
+        setSelectedAdmins([])
+        onSuccess()
+        onClose()
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to create task")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+    const handleProceedLock = async () => {
+    setIsLockingFolder(true)
+    try {
+      const response = await fetch("/api/folders/toggle-task-lock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          folderId,
+          taskLocked: true,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to lock folder")
+      }
+
+      setShowLockConfirm(false)
       setTitle("")
       setDescription("")
       setRequiredFileType("")
@@ -116,10 +157,22 @@ export function CreateTaskModal({ isOpen, onClose, folderId, dimensionId, onSucc
       onSuccess()
       onClose()
     } catch (err: any) {
-      setError(err.message || "Failed to create task")
+      setError(err.message || "Failed to lock folder")
     } finally {
-      setIsLoading(false)
+      setIsLockingFolder(false)
     }
+  }
+
+  const handleSkipLock = () => {
+    setShowLockConfirm(false)
+    setTitle("")
+    setDescription("")
+    setRequiredFileType("")
+    setDueDate(undefined)
+    setAssignedToEveryone(false)
+    setSelectedAdmins([])
+    onSuccess()
+    onClose()
   }
 
   const handleAdminToggle = (adminId: string) => {
@@ -127,7 +180,8 @@ export function CreateTaskModal({ isOpen, onClose, folderId, dimensionId, onSucc
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+    <Dialog open={isOpen && !showLockConfirm} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto bg-white">
         <DialogHeader>
           <DialogTitle className="font-bold tracking-wide text-xl">Create New Task</DialogTitle>
@@ -135,7 +189,21 @@ export function CreateTaskModal({ isOpen, onClose, folderId, dimensionId, onSucc
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>}
+           {error && (
+            <div className="flex items-start gap-2 p-3 mb-4 rounded-md bg-destructive/10 border border-red-900 bg-red-100 animate-fade-in">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+              <p className="text-sm text-destructive font-medium">{error}</p>
+              {/* Optional dismiss button */}
+              {/* <Button
+                variant="ghost"
+                size="icon"
+                className="ml-auto text-destructive"
+                onClick={() => setError(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button> */}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="title">Task Title *</Label>
@@ -252,5 +320,42 @@ export function CreateTaskModal({ isOpen, onClose, folderId, dimensionId, onSucc
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+
+    <Dialog open={showLockConfirm} onOpenChange={setShowLockConfirm}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-gray-dark">
+          <DialogHeader>
+            <DialogTitle>Lock Folder?</DialogTitle>
+            <DialogDescription>
+              You have assigned a task to this folder. Would you like to lock this folder to prevent other members from
+              uploading files until the task is completed?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+            <p className="text-sm text-amber-900">
+              When locked, members will only be able to upload files in this folder through the assigned task.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleSkipLock} disabled={isLockingFolder}>
+              Skip
+            </Button>
+            <Button onClick={handleProceedLock} disabled={isLockingFolder}>
+              {isLockingFolder ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Locking...
+                </>
+              ) : (
+                "Proceed to Lock"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      </>
   )
 }

@@ -25,9 +25,10 @@ interface SubmitTaskModalProps {
   onClose: () => void
   task: FolderTask
   onSuccess: () => void
+  currentUserId: string
 }
 
-export function SubmitTaskModal({ isOpen, onClose, task, onSuccess }: SubmitTaskModalProps) {
+export function SubmitTaskModal({ isOpen, onClose, task, onSuccess, currentUserId }: SubmitTaskModalProps) {
   const { user } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -68,7 +69,7 @@ export function SubmitTaskModal({ isOpen, onClose, task, onSuccess }: SubmitTask
       return
     }
 
-    if (!user?.id) {
+    if (!currentUserId) {
       setError("User not authenticated")
       return
     }
@@ -80,7 +81,7 @@ export function SubmitTaskModal({ isOpen, onClose, task, onSuccess }: SubmitTask
       const formData = new FormData()
       formData.append("taskId", task.id.toString())
       formData.append("file", selectedFile)
-      formData.append("userId", user.id)
+      formData.append("userId", currentUserId)
 
       const response = await fetch("/api/tasks/submit", {
         method: "POST",
@@ -129,7 +130,7 @@ export function SubmitTaskModal({ isOpen, onClose, task, onSuccess }: SubmitTask
 
         <div className="space-y-4 py-4">
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md flex items-center gap-2">
+            <div className="text-sm text-destructive bg-red-100 border border-red-900 p-3 rounded-md flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               {error}
             </div>
