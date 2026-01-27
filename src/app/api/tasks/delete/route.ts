@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { logTaskActivity } from "@/libs/task-activity-logger"
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -27,12 +28,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "You don't have permission to delete tasks" }, { status: 403 })
     }
 
+    const { data: taskData } = await supabase
+      .from("folder_tasks")
+      .select("id, title, folder_id, dimension_id, due_date")
+      .eq("id", taskId)
+      .single()
+
     // Delete task (cascade will handle task_reviews)
     const { error: deleteError } = await supabase.from("folder_tasks").delete().eq("id", taskId)
 
     if (deleteError) {
       return NextResponse.json({ error: deleteError.message }, { status: 500 })
     }
+
+    await logTaskActivity({
+      taskId: Number.parseInt(taskId),
+      folderId: taskData?.folder_id || "",
+      dimensionId: taskData?.dimension_id || "",
+      action: "Task Deletion",
+      actorId: user.id,
+      actorRole: "Dimension Leader",
+      description: `Deleted task "${taskData?.title || "Unknown"}"`,
+      remarks: "Deleted",
+      due: taskData?.due_date,
+      metadata: {
+        taskTitle: taskData?.title,
+      },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

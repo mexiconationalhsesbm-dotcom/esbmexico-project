@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
 import { createClient as createAdmin } from "@supabase/supabase-js"
 import { checkAndUnlockFolders } from "@/libs/task-lock-utils"
+import { logTaskActivity } from "@/libs/task-activity-logger"
 
 const supabaseAdmin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
   auth: { persistSession: false },
@@ -47,21 +48,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
+    const { data: taskData } = await supabase
+      .from("folder_tasks")
+      .select("id, title, folder_id, dimension_id, due_date")
+      .eq("id", submission.task_id)
+      .single()
+
+    const { data: submitterData } = await supabase
+      .from("teachers")
+      .select("fullname")
+      .eq("account_id", submission.submitted_by)
+      .single()
+
+    const { data: folderData } = await supabase
+      .from("folders")
+      .select("name")
+      .eq("id", taskData?.folder_id)
+      .single()
+
     // Update assignment status based on tag
     if (submission?.task_assignments) {
       let newStatus = "submitted"
+      let remark: string = "For Revision"
       if (tag === "accepted") {
         newStatus = "completed"
+        remark = "Accepted"
       } else if (tag === "for_revision") {
         newStatus = "for_revision"
+        remark = "For Revision"
       } else if (tag === "rejected") {
         newStatus = "pending"
+        remark = "Rejected"
       }
 
       await supabase
         .from("task_assignments")
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq("id", submission.task_assignments.id)
+
+      await logTaskActivity({
+        taskId: submission.task_id,
+        folderId: taskData?.folder_id || "",
+        dimensionId: taskData?.dimension_id || "",
+        action: "Task Review",
+        actorId: user.id,
+        actorRole: "Dimension Leader",
+        description: `Reviewed submission by "${submitterData?.fullname || "Unknown"}" in the task "${taskData?.title || "Unknown"}" in folder "${folderData?.name || "Unknown"}": ${tag === "accepted" ? "Accepted" : tag === "for_revision" ? "Requested revision" : "Rejected"}`,
+        remarks: remark as any,
+        due: taskData?.due_date,
+        metadata: {
+          tag,
+          submissionId,
+          versionNumber: submission.version_number,
+        },
+      })
 
       // Check if all assignments are completed to update task status
       if (tag === "accepted") {
@@ -172,6 +212,8 @@ export async function POST(request: NextRequest) {
             .update({ task_locked: false })
             .eq("id", taskData.folder_id)
         }
+
+
 
       }
     }

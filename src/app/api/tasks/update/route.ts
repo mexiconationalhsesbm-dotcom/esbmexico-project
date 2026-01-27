@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { logTaskActivity } from "@/libs/task-activity-logger"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,12 @@ export async function POST(request: NextRequest) {
     if (!isLeader && !isAdmin) {
       return NextResponse.json({ error: "Only leaders can update tasks" }, { status: 403 })
     }
+    // Get old task data for comparison
+    const { data: oldTask } = await supabase
+      .from("folder_tasks")
+      .select("id, title, description, required_file_type, due_date, folder_id, dimension_id")
+      .eq("id", taskId)
+      .single()
 
     // Update the task
     const { data: task, error: updateError } = await supabase
@@ -55,6 +62,29 @@ export async function POST(request: NextRequest) {
           .eq("status", "missing")
       }
     }
+
+    // Build description of changes
+    const changes: string[] = []
+    if (oldTask?.title !== title) changes.push(`title from "${oldTask?.title}" to "${title}"`)
+    if (oldTask?.description !== description) changes.push(`description`)
+    if (oldTask?.required_file_type !== requiredFileType) changes.push(`required file type`)
+    if (oldTask?.due_date !== dueDate) changes.push(`due date`)
+
+    // Log task edit
+    await logTaskActivity({
+      taskId: Number.parseInt(taskId),
+      folderId: oldTask?.folder_id || "",
+      dimensionId: oldTask?.dimension_id || "",
+      action: "Task Edit",
+      actorId: user.id,
+      actorRole: "Dimension Leader",
+      description: `Task "${title}" was edited: ${changes.join(", ")}`,
+      remarks: "Edited",
+      due: dueDate,
+      metadata: {
+        changedFields: changes,
+      },
+    })
 
     return NextResponse.json({ success: true, task })
   } catch (error: any) {

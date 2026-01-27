@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -39,10 +39,7 @@ export function ManageAssigneesModal({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-
-  /* ---------------------------- Data ---------------------------- */
-
-  const fetchAdmins = async () => {
+  const fetchAdmins = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch("/api/admins/list")
@@ -52,9 +49,7 @@ export function ManageAssigneesModal({
 
       setAdmins(
         (data.admins as Admin[]).filter(
-          (a) =>
-            a.assigned_dimension_id === dimensionId &&
-            a.role_id === 5
+          (a) => a.assigned_dimension_id === dimensionId && a.role_id === 5
         )
       )
     } catch (err) {
@@ -63,9 +58,10 @@ export function ManageAssigneesModal({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [dimensionId])
 
-  const fetchAssignedAdmins = async () => {
+
+  const fetchAssignedAdmins = useCallback(async () => {
     try {
       const response = await fetch(`/api/tasks/assignees?taskId=${taskId}`)
       const data = await response.json()
@@ -73,14 +69,14 @@ export function ManageAssigneesModal({
       if (!response.ok) throw new Error(data.error)
 
       const ids = data.assignees.map((a: any) => String(a.id))
-
       setSelectedAdmins(ids)
       setOriginalAdmins(ids)
     } catch (err) {
       console.error(err)
       setError("Failed to load assigned members")
     }
-  }
+  }, [taskId])
+
 
     useEffect(() => {
     if (!isOpen) return
@@ -88,8 +84,6 @@ export function ManageAssigneesModal({
     fetchAdmins()
     fetchAssignedAdmins()
   }, [isOpen, taskId, fetchAdmins, fetchAssignedAdmins])
-
-  /* ---------------------------- Actions ---------------------------- */
 
   const toggleAdmin = (id: string) => {
     setSelectedAdmins((prev) =>

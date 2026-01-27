@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { logTaskActivity } from "@/libs/task-activity-logger"
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,6 +95,43 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    const { data: folderData } = await supabase
+        .from("folders")
+        .select("name")
+        .eq("id", folderId)
+        .single()
+
+    const folder_name = folderData?.name
+
+    const formattedDueDate = dueDate
+      ? new Date(dueDate).toLocaleDateString('en-US', {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric',
+        })
+      : null;
+
+    const dueDateText = formattedDueDate
+  ? `due ${formattedDueDate}`
+  : 'with no due date';
+
+    await logTaskActivity({
+      taskId: task.id,
+      folderId,
+      dimensionId,
+      action: "Task Creation",
+      actorId: user.id,
+      actorRole: "Dimension Leader",
+      description: `Created task "${title}" in folder ${folder_name} ${dueDateText}`,
+      remarks: "Created",
+      due: dueDate,
+      metadata: {
+        dueDate,
+        assignedToEveryone,
+        assignmentCount: assignedToAdmins?.length || 0,
+      },
+    })
 
     // 📌 Create task assignments (REAL rows only)
     const assignments = resolvedAdminIds.map(adminId => ({

@@ -13,7 +13,7 @@ export function IdleDetectionProvider({ children }: { children: React.ReactNode 
   const router = useRouter()
   const supabase = createClient()
 
-  // ✅ Detect logged-in state
+  // Detect logged-in state
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession()
@@ -21,7 +21,7 @@ export function IdleDetectionProvider({ children }: { children: React.ReactNode 
     }
     getSession()
 
-    // ✅ Also listen for login/logout changes
+    // Also listen for login/logout changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session)
     })
@@ -43,7 +43,7 @@ export function IdleDetectionProvider({ children }: { children: React.ReactNode 
     setShowInactivityModal(false)
   }, [])
 
-  // ✅ Only enable idle detection if logged in
+  // Only enable idle detection if logged in
   useIdleDetection({
     idleTime: 10 * 60 * 1000,
     warningTime: 1 * 60 * 1000,

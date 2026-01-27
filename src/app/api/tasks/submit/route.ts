@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { checkIfLate, logTaskActivity } from "@/libs/task-activity-logger"
 
 const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
   auth: { persistSession: false },
@@ -140,6 +141,26 @@ export async function POST(request: NextRequest) {
       .from("task_assignments")
       .update({ status: "submitted", updated_at: new Date().toISOString() })
       .eq("id", assignment.id)
+
+    const isLate = task.due_date && checkIfLate(task.due_date, new Date().toISOString())
+
+    // Log submission activity
+    await logTaskActivity({
+      taskId: Number.parseInt(taskId),
+      folderId: task.folder_id,
+      dimensionId: task.dimension_id,
+      action: "Submission",
+      actorId: userId,
+      actorRole: "Dimension Member",
+      description: `Submitted a file to task: "${task.title}". Submission number ${nextVersion}.`,
+      remarks: isLate ? "Late" : "On time",
+      due: task.due_date,
+      metadata: {
+        versionNumber: nextVersion,
+        fileName: file.name,
+        fileSize: file.size,
+      },
+    })
 
     return NextResponse.json({ success: true, submission })
   } catch (error: any) {

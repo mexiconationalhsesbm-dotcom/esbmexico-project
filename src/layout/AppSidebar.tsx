@@ -97,11 +97,14 @@ const navItems: NavItem[] = useMemo(() => [
     : []),
     ...(isMasterAdmin || isDimensionLeader
     ? [
-      {
-        icon: <TaskIcon />,
-        name: "Tasks",
-        path: "/dashboard/task",
-      },
+        {
+          name: "Tasks",
+          icon: <TaskIcon />,
+          subItems: [
+            { name: "TaskBoard", path: "/dashboard/task" },
+            { name: "Task Reports", path: "/dashboard/reports" },
+          ],
+        },
       ]
     : []),
 
